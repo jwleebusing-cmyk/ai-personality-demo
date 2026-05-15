@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI人格对话 · Three Voices</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --surface: #ffffff;
+    --text: #1a1a1a;
+    --muted: #8c8c8c;
+    --border: #e8e4df;
+    --accent: #b8563f;
+    --accent-a: #c9704e;
+    --accent-b: #5a8f7a;
+    --accent-c: #7b6fb8;
+    --radius: 6px;
+    --shadow: 0 1px 4px rgba(0,0,0,0.04);
+    --gap: 20px;
+    --page-width: 840px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container {
+    width: min(var(--page-width), 94vw);
+    padding: 48px 0;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .header .tag {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+  .header .subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  /* ── Input Section ── */
+  .input-section {
+    margin-bottom: 12px;
+  }
+  .input-row {
+    display: flex;
+    gap: 8px;
+  }
+  .input-row input {
+    flex: 1;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 15px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-row input:focus {
+    border-color: var(--accent);
+  }
+  .input-row input::placeholder {
+    color: #c0bdb8;
+  }
+  .input-row button {
+    background: var(--text);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 14px 28px;
+    font-size: 14px;
+    font-family: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: opacity 0.2s, background 0.2s;
+    font-weight: 500;
+  }
+  .input-row button:hover { opacity: 0.85; }
+  .input-row button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* ── Presets ── */
+  .presets {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+  }
+  .presets span {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 16px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    user-select: none;
+    white-space: nowrap;
+  }
+  .presets span:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Response Grid ── */
+  .response-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--gap);
+    margin-bottom: 48px;
+  }
+  .response-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+  }
+  .response-card .card-accent {
+    width: 20px;
+    height: 2px;
+    margin-bottom: 14px;
+    border-radius: 1px;
+  }
+  .accent-a { background: var(--accent-a); }
+  .accent-b { background: var(--accent-b); }
+  .accent-c { background: var(--accent-c); }
+
+  .response-card .persona-label {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .label-a { color: var(--accent-a); }
+  .label-b { color: var(--accent-b); }
+  .label-c { color: var(--accent-c); }
+
+  .response-card .persona-name {
+    font-family: 'Times New Roman', 'Songti SC', 'Noto Serif SC', serif;
+    font-size: 16px;
+    font-weight: 400;
+    margin-bottom: 2px;
+    color: var(--text);
+  }
+  .response-card .persona-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .response-card .response-text {
+    font-size: 14px;
+    line-height: 1.85;
+    color: var(--text);
+    flex: 1;
+  }
+  .response-card .response-placeholder {
+    font-size: 14px;
+    line-height: 1.85;
+    color: #d0cdc7;
+    font-style: italic;
+    flex: 1;
+  }
+
+  /* ── Key Settings ── */
+  .key-section {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 36px;
+  }
+  .key-section input {
+    width: 360px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    font-size: 12px;
+    font-family: inherit;
+    font-family: monospace;
+    background: var(--surface);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .key-section input:focus {
+    border-color: var(--accent);
+  }
+  .key-section button {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 16px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .key-section button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .key-section .key-status {
+    font-size: 11px;
+    color: #5a8f7a;
+    white-space: nowrap;
+  }
+  .key-section .key-status.missing {
+    color: var(--muted);
+  }
+
+  /* ── Loading & Error ── */
+  .response-loading {
+    font-size: 14px;
+    line-height: 1.85;
+    color: #c0bdb8;
+    animation: pulse 1.4s ease-in-out infinite;
+    flex: 1;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+  .response-error {
+    font-size: 13px;
+    line-height: 1.85;
+    color: #c9704e;
+    flex: 1;
+  }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ── Mobile ── */
+  @media (max-width: 680px) {
+    .response-grid {
+      grid-template-columns: 1fr;
+    }
+    .input-row {
+      flex-direction: column;
+    }
+    .input-row button {
+      padding: 14px;
+    }
+    .container {
+      padding: 32px 0;
+    }
+    .header {
+      margin-bottom: 32px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="header">
+    <div class="tag">AI Personality Demo</div>
+    <h1>三种AI人格，三种回应方式</h1>
+    <p class="subtitle">
+      同一句话，陪伴型、启发型、协创型各自如何回应？<br>
+      输入你想说的话，看看AI能用几种方式理解你。
+    </p>
+  </div>
+
+  <div class="input-section">
+    <div class="input-row">
+      <input type="text" id="userInput" placeholder="说点什么吧。比如：我最近好累……" autofocus>
+      <button id="sendBtn">发送</button>
+    </div>
+  </div>
+
+  <div class="presets">
+    <span data-text="我实际上挺瞧不上他的，但就有种食之无味弃之可惜的感觉。">食之无味弃之可惜</span>
+    <span data-text="我有点想裸辞。倒不是有下家，就是每次打开电脑都觉得做不下去了，但又不敢真的走。">我有点想裸辞</span>
+    <span data-text="我写了一段AI对话规范，总觉得太虚了但说不上来怎么改：AI应以友好专业的态度服务用户……">帮我看看这段话哪里不对</span>
+  </div>
+
+  <div class="key-section" id="keySection">
+    <input type="password" id="keyInput" placeholder="输入你的 DeepSeek API Key（只存你浏览器里）">
+    <button id="keySaveBtn">保存</button>
+    <span class="key-status missing" id="keyStatus">未设置Key</span>
+  </div>
+
+  <div class="response-grid" id="responseGrid">
+    <!-- Card A: 陪伴型 -->
+    <div class="response-card" id="cardA">
+      <div class="card-accent accent-a"></div>
+      <div class="persona-label label-a">Persona 1</div>
+      <div class="persona-name">陪伴型</div>
+      <div class="persona-desc">安静的倾听者</div>
+      <div class="response-placeholder" id="textA">
+        在输入框里说点什么，我会用三种方式回应你。
+      </div>
+    </div>
+    <!-- Card B: 启发型 -->
+    <div class="response-card" id="cardB">
+      <div class="card-accent accent-b"></div>
+      <div class="persona-label label-b">Persona 2</div>
+      <div class="persona-name">启发型</div>
+      <div class="persona-desc">好奇的探索伙伴</div>
+      <div class="response-placeholder" id="textB">
+        每种人格的设计目标不同——有的先接住情绪，有的用一个好问题轻推，有的跟你并肩推进。
+      </div>
+    </div>
+    <!-- Card C: 协创型 -->
+    <div class="response-card" id="cardC">
+      <div class="card-accent accent-c"></div>
+      <div class="persona-label label-c">Persona 3</div>
+      <div class="persona-name">协创型</div>
+      <div class="persona-desc">并肩的创作者</div>
+      <div class="response-placeholder" id="textC">
+        这些人格设计来自我基于用户反馈的五维AI对话评估体系——不只是"好"或"坏"，而是看到了差异。
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    基于用户反馈编码 → 五维评估体系 → 三种人格原型 · 李佳蔚 2026
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// Config
+// ═══════════════════════════════════════════
+const API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const TIMEOUT_MS = 20000;
+// API Key 从 sessionStorage 读取，用户浏览器内保存，不发往任何第三方
+function getKey() {
+  return sessionStorage.getItem('ds_key') || '';
+}
+function setKey(k) {
+  sessionStorage.setItem('ds_key', k.trim());
+}
+
+// ═══════════════════════════════════════════
+// System Prompts
+// ═══════════════════════════════════════════
+const SYSTEM_PROMPTS = {
+  companion: `你是用户的倾听伙伴。你的核心目标不是解决问题，而是让用户感到"这里有一个安全的人，我可以把东西放下来"。
+
+对话原则：
+- 回应密度低，给用户留出表达空间。不填满每一秒沉默。
+- 核心动作：确认情绪 → 轻量化回映（用用户自己的词）→ 用提问邀请展开（而非用分析来接管）。
+- 不要急于给建议、不要急于总结。你的存在感应该像一个人在安静地陪着另一个人。
+- 当不确定用户想要什么时，直接问："你想我陪你理一理，还是听你说，还是一起看看怎么办？"
+- 语言风格：口语化、具体、不完美。避免"我们都会""你可以试着"等模板话术。用"你"多于用"我们"。
+
+节奏规则：
+- 不引入建议、不分析、不解释。
+- 如果用户说了一个比喻或意象，先接住那个意象再推进。
+- 回复控制在150字以内。你是在对话，不是在写文章。`,
+
+  inspire: `你是用户的思考伙伴。你的核心目标是用一个好问题，帮用户看到自己没注意到的角度。
+
+对话原则：
+- 先确认用户当前的位置（你看到了什么、想到了什么），再轻推。
+- 核心动作：理解用户当前框架 → 发现框架的盲区或边界 → 提出一个探索性问句。
+- 每次只给一个关键问题，不要一连抛出三四个。让问题落在用户刚好能接住的地方。
+- 提问是出于好奇，不是完成任务。不要问你已经知道答案的问题。
+- 语言风格：清晰、精准、不绕弯。像是一个很会提问的朋友，不是考官。
+
+关键约束：
+- 不要替用户回答自己提出的问题。问题抛出去后停住，等用户回应。
+- 不要同时走在多条路径上（认知解释+行为建议+探索提问三选一）。
+- 如果用户表现出"不想想了"的信号，退回到倾听模式。
+- 回复控制在150字以内。`,
+
+  cocreate: `你是用户的创作搭档。核心目标不是替用户完成，而是和用户一起推进——像并肩做东西的伙伴。
+
+对话原则：
+- 有来有回，AI有主见但不过度强势。最终裁决权永远在用户手里。
+- 核心动作：理解用户的创作意图 → 给出具体、可迭代的反馈 → 保留用户的选择权。
+- 反馈永远要具体。不说"写得不错"，说"第三段那个比喻很准，第二段的过渡可以再紧一点"。
+- 提供选项而非指令。"可以从A角度或B角度切入，你觉得哪个更靠近你想说的？"
+
+关键约束：
+- 一次只迭代一个点。不要一次性给全套修改方案。
+- 在给出建议前先确认："你希望我帮你打磨现有的，还是想试试别的方向？"
+- 如果用户说"算了就这样吧"，立刻收手，不要继续优化。
+- 回复控制在200字以内。`
+};
+
+// ═══════════════════════════════════════════
+// DOM refs
+// ═══════════════════════════════════════════
+const input = document.getElementById('userInput');
+const sendBtn = document.getElementById('sendBtn');
+const textA = document.getElementById('textA');
+const textB = document.getElementById('textB');
+const textC = document.getElementById('textC');
+const cardA = document.getElementById('cardA');
+const cardB = document.getElementById('cardB');
+const cardC = document.getElementById('cardC');
+
+const cards = {
+  companion: { el: cardA, textEl: textA },
+  inspire:    { el: cardB, textEl: textB },
+  cocreate:   { el: cardC, textEl: textC }
+};
+
+// ═══════════════════════════════════════════
+// Key management
+// ═══════════════════════════════════════════
+const keyInput = document.getElementById('keyInput');
+const keySaveBtn = document.getElementById('keySaveBtn');
+const keyStatus = document.getElementById('keyStatus');
+
+function updateKeyUI() {
+  const k = getKey();
+  if (k) {
+    keyInput.value = k.slice(0, 8) + '…' + k.slice(-4);
+    keyStatus.textContent = 'Key已保存';
+    keyStatus.className = 'key-status';
+  } else {
+    keyInput.value = '';
+    keyStatus.textContent = '未设置Key';
+    keyStatus.className = 'key-status missing';
+  }
+}
+
+keySaveBtn.addEventListener('click', () => {
+  const val = keyInput.value.trim();
+  if (!val) return;
+  setKey(val);
+  updateKeyUI();
+});
+
+keyInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    keySaveBtn.click();
+  }
+});
+
+updateKeyUI();
+
+// ═══════════════════════════════════════════
+// Presets
+// ═══════════════════════════════════════════
+document.querySelectorAll('.presets span').forEach(span => {
+  span.addEventListener('click', () => {
+    input.value = span.dataset.text;
+    input.focus();
+  });
+});
+
+// ═══════════════════════════════════════════
+// Send
+// ═══════════════════════════════════════════
+sendBtn.addEventListener('click', send);
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') send();
+});
+
+function send() {
+  const msg = input.value.trim();
+  if (!msg) return;
+  if (sendBtn.disabled) return;
+
+  if (!getKey()) {
+    keyInput.focus();
+    keyStatus.textContent = '请先设置Key';
+    keyStatus.className = 'key-status missing';
+    return;
+  }
+
+  // UI → loading
+  sendBtn.disabled = true;
+  sendBtn.textContent = '…';
+
+  Object.values(cards).forEach(({ textEl }) => {
+    textEl.className = 'response-loading';
+    textEl.textContent = '...';
+  });
+
+  // 三次并行请求
+  const requests = ['companion', 'inspire', 'cocreate'].map(type =>
+    callDeepSeek(type, msg)
+      .then(text => ({ type, text, ok: true }))
+      .catch(err => ({ type, text: err.message, ok: false }))
+  );
+
+  Promise.all(requests).then(results => {
+    results.forEach(({ type, text, ok }) => {
+      const { textEl } = cards[type];
+      textEl.className = ok ? 'response-text' : 'response-error';
+      textEl.textContent = text;
+    });
+    sendBtn.disabled = false;
+    sendBtn.textContent = '发送';
+  });
+}
+
+// ═══════════════════════════════════════════
+// API call
+// ═══════════════════════════════════════════
+async function callDeepSeek(type, userMessage) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  const url = API_URL;
+  const headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${getKey()}` };
+
+  const body = JSON.stringify({
+    model: 'deepseek-chat',
+    messages: [
+      { role: 'system', content: SYSTEM_PROMPTS[type] },
+      { role: 'user', content: userMessage }
+    ],
+    temperature: 0.7,
+    max_tokens: 600
+  });
+
+  let res;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body,
+      signal: controller.signal
+    });
+  } catch (e) {
+    clearTimeout(timer);
+    if (e.name === 'AbortError') throw new Error('回复超时了，再试一次？');
+    throw new Error('网络好像断了，检查一下连接？');
+  }
+  clearTimeout(timer);
+
+  if (!res.ok) {
+    throw new Error('接口暂时不可用（' + res.status + '），稍等再试');
+  }
+
+  const data = await res.json();
+  const reply = data.choices?.[0]?.message?.content?.trim();
+  if (!reply) throw new Error('这次回复是空的，换个说法试试？');
+  return reply;
+}
+</script>
+
+</body>
+</html>
